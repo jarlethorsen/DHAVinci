@@ -48,6 +48,7 @@ def init_argparse() -> argparse.ArgumentParser:
 
 @dataclass
 class DHAVContext:
+    MAX_FRAME_LENGTH: int = 209_715_200
     type: int = 0
     subtype: int = 0
     channel: int = 0
@@ -77,11 +78,13 @@ class DHAVContext:
         self.frame_length = int.from_bytes(f.read(4), byteorder='little') # Number of bytes of this DHAV frame
         self.date = int.from_bytes(f.read(4), byteorder='little')
         self.timestamp = int.from_bytes(f.read(2), byteorder='little')
-        
-        if self.type_ok():
-            # Go to start of frame and read the whole frame into self.data
-            f.seek(-22, os.SEEK_CUR)
-            self.data = f.read(self.frame_length)
+      
+        # Go to start of frame and read the whole frame into self.data
+        f.seek(-22, os.SEEK_CUR)
+        if self.frame_length > self.MAX_FRAME_LENGTH:
+            self.frame_length = self.MAX_FRAME_LENGTH
+            logger.error(f'Found frame with a length of {self.frame_length}, this is WAY to big! only returning the first {self.MAX_FRAME_LENGTH} bytes.')
+        self.data = f.read(self.frame_length)
     
     def type_ok(self):
         """
@@ -160,12 +163,11 @@ def get_frame(data, offset):
         dhav = DHAVContext()
         data.seek(header_offset, 0)
         dhav.read_data(data)
-        if dhav.type_ok():
-            try:
-                timestamp = date_to_timestamp(dhav.date)
-                return (header_offset, dhav)
-            except ValueError:
-                logger.debug(f'Illegal date timestamp {dhav.date} at offset {header_offset} DHAVContext: {dhav}')
+        try:
+            timestamp = date_to_timestamp(dhav.date)
+            return (header_offset, dhav)
+        except ValueError:
+            logger.debug(f'Illegal date timestamp {dhav.date} at offset {header_offset} DHAVContext: {dhav}')
         # Keep searching
         offset = header_offset + 4
 
@@ -186,7 +188,7 @@ def get_cont_frames(data, offset, starttime, stoptime):
                     continue
             if frame.data[4:].find(b'DHAV') > -1:
                 # Skip frames that have other DHAV frames within
-                logger.debug(f'Frame at offset {offset} contains more than one DHAV header, skipping this header and look at headers inside instead')
+                logger.debug(f'Frame at offset {offset} contains more than one DHAV header, skipping this header and will examine headers inside instead')
                 offset += 4
                 continue
             if frames:
