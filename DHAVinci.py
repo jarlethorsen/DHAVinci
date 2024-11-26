@@ -231,9 +231,10 @@ def main():
 
     
     with open(args.get('inputfile'), 'r+b') as f:
-        davoutputfolder = os.path.join(outputfolder, 'video')
-        if not os.path.exists(davoutputfolder):
-            os.makedirs(davoutputfolder)
+        if not args.get('dryrun'):
+            videooutputfolder = os.path.join(outputfolder, 'video')
+            if not os.path.exists(videooutputfolder):
+                os.makedirs(videooutputfolder)
 
         # startoffset needs to be dividable by mmap.ALLOCATIONGRANULARITY, so we subtract if needed
         over = startoffset % mmap.ALLOCATIONGRANULARITY
@@ -248,23 +249,31 @@ def main():
         # Start searching
         start_time = time.time()
         while True:
-            header_offset = mm.find(b'DHAV', offset)
-            if header_offset == -1:
-                # No more headers found, write remaining frames to disk and exit
-                if frames and timestamp_ok(timestamp, starttime, stoptime):
-                    if not args.get('dryrun'):
-                        write_dav(davoutputfolder, frames)
+            frames = get_cont_frames(mm, offset, starttime, stoptime)
+            if not frames:
                 break
-
-            # Header found
-            found_location = header_offset + startoffset
             found_time = time.time()
+            found_location = frames[0][0]
             running_time = found_time - start_time
             eta = 'N/A'
             if running_time > 0:
+                speed = found_location / running_time # bytes per second
+                if speed > 0:
+                    remaining = (mapsize - found_location) / speed # seconds remaining
+                    eta = str(timedelta(seconds=remaining)).split('.', 2)[0]
+            logger.info(f'Found {len(frames)} contiguous DHAV frames starting at offset {found_location}/{filesize} ({int(found_location/filesize*100)}%) ETA:{eta}')
+            if not args.get('dryrun'):
+                if args.get('h264'):
+                    write_h264(videooutputfolder, frames)
+                else:
+                    write_dav(videooutputfolder, frames)
             if args.get('csv'):
                 write_csv(dhav_csv, frames)
 
+            # Keep searching at new offset
+            offset = frames[-1][0] + frames[-1][1].frame_length
+
+   
     if args.get('csv'):
         if dhav_csv:
             dhav_csv.close()
