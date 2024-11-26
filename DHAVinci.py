@@ -122,10 +122,10 @@ def date_to_str(date):
     return f'{year}{str(month).zfill(2)}{str(day).zfill(2)}{str(hour).zfill(2)}{str(min).zfill(2)}{str(sec).zfill(2)}'
 
 def write_dav(outputfolder, frames):
-    filename = f'NVR_{frames[0].channel}_main_{date_to_str(frames[0].date)}_{date_to_str(frames[-1].date)}.dav'
+    filename = f'NVR_{frames[0][1].channel}_main_{date_to_str(frames[0][1].date)}_{date_to_str(frames[-1][1].date)}.dav'
     output = os.path.join(outputfolder, filename)
     with open(output, 'wb') as f:
-        for frame in frames:
+        for _, frame in frames:
             f.write(frame.data)
 
 def timestamp_ok(timestamp, starttime, stoptime):
