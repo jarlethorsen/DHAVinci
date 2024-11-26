@@ -82,8 +82,8 @@ class DHAVContext:
         # Go to start of frame and read the whole frame into self.data
         f.seek(-22, os.SEEK_CUR)
         if self.frame_length > self.MAX_FRAME_LENGTH:
-            self.frame_length = self.MAX_FRAME_LENGTH
             logger.error(f'Found frame with a length of {self.frame_length}, this is WAY to big! only returning the first {self.MAX_FRAME_LENGTH} bytes.')
+            self.frame_length = self.MAX_FRAME_LENGTH
         self.data = f.read(self.frame_length)
     
     def type_ok(self):
