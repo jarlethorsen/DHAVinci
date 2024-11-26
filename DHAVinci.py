@@ -135,6 +135,58 @@ def timestamp_ok(timestamp, starttime, stoptime):
         return False
     return True
 
+def get_frame(data, offset):
+    # Get one DHAV frame
+    while True:
+        header_offset = data.find(b'DHAV', offset)
+        if header_offset == -1:
+            return None
+        dhav = DHAVContext()
+        data.seek(header_offset, 0)
+        dhav.read_data(data)
+        if dhav.type_ok():
+            try:
+                timestamp = date_to_timestamp(dhav.date)
+                return (header_offset, dhav)
+            except ValueError:
+                logger.debug(f'Illegal date timestamp {dhav.date} at offset {header_offset} DHAVContext: {dhav}')
+        # Keep searching
+        offset = header_offset + 4
+
+
+def get_cont_frames(data, offset, starttime, stoptime):
+    # Get contiguous, non-fragmented DHAV frames
+    # If starttime/stoptime is given, only frames in timeframe are returned
+    frames = []
+    while True:
+        offset, frame = get_frame(data, offset) or (None, None)
+        if frame:
+            if starttime or stoptime:
+                # Check if timestamp is within requested timeframe
+                timestamp = date_to_timestamp(frame.date)
+                if not timestamp_ok(timestamp, starttime, stoptime):
+                    # Skip frame
+                    offset += 4
+                    continue
+            if frame.data[4:].find(b'DHAV') > -1:
+                # Skip frames that have other DHAV frames within
+                logger.debug(f'Frame at offset {offset} contains more than one DHAV header, skipping this header and look at headers inside instead')
+                offset += 4
+                continue
+            if frames:
+                # This is not the first frame, we make sure it is contiguous
+                if frames[-1][0] + frames[-1][1].frame_length == offset:
+                    frames.append((offset, frame))
+                else:
+                    return frames
+            else:
+                frames.append((offset, frame))
+            # Continue searching at end of last frame
+            offset += frames[-1][1].frame_length
+        else:
+            return frames
+
+
 def main():
     # Parse args
     parser = init_argparse()
