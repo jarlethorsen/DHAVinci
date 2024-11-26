@@ -238,7 +238,7 @@ def main():
         startoffset -= over
         offset = 0
         # memory-map the file
-        mm = mmap.mmap(f.fileno(), startoffset, access=mmap.ACCESS_READ)
+        mm = mmap.mmap(f.fileno(), length=0, offset=startoffset, access=mmap.ACCESS_READ)
         mapsize = mm.size()
         filesize = startoffset + mapsize
         frames = []
