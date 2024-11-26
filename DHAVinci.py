@@ -215,12 +215,9 @@ def main():
         stoptime = str_to_timestamp(stoptime)
     if args.get('csv'):
         # Open csv files for writing
-        alloutputfile = open(os.path.join(outputfolder, 'found_all.csv'), 'w')
+        dhav_csv = open(os.path.join(outputfolder, 'dhav.csv'), 'w')
         heading = 'timestamp,offset,type,subtype,channel,frame_number,frame_subnumber,frame_length,extra_timestamp'
-        alloutputfile.write(f'{heading}\n')
-        if starttime or stoptime:
-            selectionoutputfile = open(os.path.join(outputfolder, 'found_selection.csv'), 'w')
-            selectionoutputfile.write(f'{heading}\n')
+        dhav_csv.write(f'{heading}\n')
     
     # Setup logging
     levels = [logging.WARNING, logging.INFO, logging.DEBUG]
@@ -263,42 +260,13 @@ def main():
             running_time = found_time - start_time
             eta = 'N/A'
             if running_time > 0:
-                speed = header_offset / running_time # bytes per second
-            if speed > 0:
-                remaining = (mapsize - header_offset) / speed # seconds remaining
-                eta = str(timedelta(seconds=remaining)).split('.', 2)[0]
-            logger.info(f'Found DHAV-frame at offset {found_location}/{filesize} ({int(found_location/filesize*100)}%) ETA:{eta}')
-            if header_offset > offset and frames:
-                # Found end of contiguous frames, write previous frames to disk, if within timeframe
-                timestamp = date_to_timestamp(frames[0].date)
-                if timestamp_ok(timestamp, starttime, stoptime):
-                    if not args.get('dryrun'):
-                        write_dav(davoutputfolder, frames)
-                frames = []
-            dhav = DHAVContext()
-            mm.seek(header_offset, 0)
-            dhav.read_data(mm)
-            try:
-                timestamp = date_to_timestamp(dhav.date)
-            except ValueError:
-                logger.debug(f'Illegal date timestamp {dhav.date} at offset {header_offset} DHAVContext: {dhav}')
-            else:
-                if args.get('csv'):
-                    # Write frame-info to csv-file
-                    if starttime or stoptime:
-                        if timestamp_ok(timestamp, starttime, stoptime):
-                            selectionoutputfile.write(f'{str(timestamp)},{header_offset+startoffset},{dhav.type.hex()},{dhav.subtype.hex()},{dhav.channel},{dhav.frame_number},{dhav.frame_subnumber},{dhav.frame_length},{dhav.timestamp}\n')
-                    alloutputfile.write(f'{str(timestamp)},{header_offset+startoffset},{dhav.type.hex()},{dhav.subtype.hex()},{dhav.channel},{dhav.frame_number},{dhav.frame_subnumber},{dhav.frame_length},{dhav.timestamp}\n')
+            if args.get('csv'):
+                write_csv(dhav_csv, frames)
 
-                frames.append(dhav)
-            # Continue searching at end of frame
-            offset = header_offset + dhav.frame_length
-    
     if args.get('csv'):
-        if selectionoutputfile:
-            selectionoutputfile.close()
-        if alloutputfile:
-            alloutputfile.close()
+        if dhav_csv:
+            dhav_csv.close()
+
 
 if __name__ == '__main__':
     main()
