@@ -100,18 +100,19 @@ class DHAVContext:
             logger.debug(f'Found unknown DHAV-type: {self.type}')
 
 def date_to_timestamp(date):
-    sec   =   date        & 0x3F
-    min   =  (date >>  6) & 0x3F
-    hour  =  (date >> 12) & 0x1F
-    day   =  (date >> 17) & 0x1F
-    month =  (date >> 22) & 0x0F
-    year  = ((date >> 26) & 0x3F) + 2000
-    return datetime(year, month, day, hour, min, sec)
+    strtimestamp = date_to_str(date)
+    return str_to_timestamp(strtimestamp)
 
 def str_to_timestamp(strtimestamp):
     return datetime.strptime(strtimestamp, '%Y%m%d%H%M%S')
 
 def date_to_str(date):
+    """
+    Example, assuming date == 1658512628:
+    01100010110110101110010011110100
+    year  month day   hour  min    sec 
+    011000 1011 01101 01110 010011 110100
+    """
     sec   =   date        & 0x3F
     min   =  (date >>  6) & 0x3F
     hour  =  (date >> 12) & 0x1F
