@@ -38,7 +38,7 @@ def init_argparse() -> argparse.ArgumentParser:
     parser.add_argument('--stop', type=str, nargs='?',
                     help='Only extract frames created before this timestamp. Timestamp should me provided in the following format: YYYYmmddhhmmss')
     parser.add_argument('--csv', action="store_true",
-                    help='Write "found_all.csv" and "found_selection.csv" with header information for all frames')
+                    help='Write "dhav.csv" with header information for all frames')
     parser.add_argument('--dryrun', action="store_true",
                     help='Only search, do not extract any frames')
     parser.add_argument('-v', '--verbosity', help='Level of logging, -vv enables debug', action='count', default=0)
