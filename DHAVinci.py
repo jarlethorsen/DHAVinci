@@ -128,6 +128,20 @@ def write_dav(outputfolder, frames):
         for _, frame in frames:
             f.write(frame.data)
 
+def write_h264(outputfolder, frames):
+    filename = f'NVR_{frames[0][1].channel}_main_{date_to_str(frames[0][1].date)}_{date_to_str(frames[-1][1].date)}.h264'
+    output = os.path.join(outputfolder, filename)
+    with open(output, 'wb') as f:
+        for _, frame in frames:
+            if frame.data[40:44] != b'\x00\x00\x00\x01':
+                logger.warning('No h264 start signature found.')
+            f.write(frame.data[40:])
+
+def write_csv(fh, frames):
+    for offset, dhav in frames:
+        fh.write(f'{str(date_to_timestamp(dhav.date))},{offset},{dhav.type.hex()},{dhav.subtype.hex()},{dhav.channel},{dhav.frame_number},{dhav.frame_subnumber},{dhav.frame_length},{dhav.timestamp}\n')
+
+
 def timestamp_ok(timestamp, starttime, stoptime):
     if starttime and timestamp < starttime:
         return False
