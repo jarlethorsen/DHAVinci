@@ -67,7 +67,7 @@ class DHAVContext:
 
     def read_data(self, f):
         self.signature = f.read(4)
-        self.type = f.read(1)
+        self.type = f.read(1) # 0xf0, 0xf1, 0xfc, 0xfd
         self.subtype = f.read(1)
         self.channel = int.from_bytes(f.read(1))
         self.frame_subnumber = int.from_bytes(f.read(1))
@@ -76,9 +76,28 @@ class DHAVContext:
         self.date = int.from_bytes(f.read(4), byteorder='little')
         self.timestamp = int.from_bytes(f.read(2), byteorder='little')
         
-        # Go to start of frame and read the whole frame into self.data
-        f.seek(-22, os.SEEK_CUR)
-        self.data = f.read(self.frame_length)
+        if self.type_ok():
+            # Go to start of frame and read the whole frame into self.data
+            f.seek(-22, os.SEEK_CUR)
+            self.data = f.read(self.frame_length)
+    
+    def type_ok(self):
+        """
+        Frame Type Summary Table (according to ChatGPT)
+        Hex Code	Frame Type	Description
+        0xFC	I-Frame	Complete image, independent.
+        0xFD	P-Frame	Encodes differences from previous frame.
+        0xFE	Audio Frame	Encoded audio data (e.g., G.711).
+        0xFA	Metadata Frame	Contains timestamps, events, or camera metadata.
+        0xF0    Metatada
+        0xF1    Typically contains extended metadata, event markers, or auxiliary information.
+        0xFB	Metadata Frame	Additional metadata (e.g., motion detection).
+        0x00	Padding/Error Frame	Filler or error indicator.
+        """
+        if self.type in [b'\xfc', b'\xfd', b'\xfe', b'\xfa', b'\xfb', b'\xf0', b'\xf1']:
+            return True
+        else:
+            logger.debug(f'Found unknown DHAV-type: {self.type}')
 
 def date_to_timestamp(date):
     sec   =   date        & 0x3F
