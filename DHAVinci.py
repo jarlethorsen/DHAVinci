@@ -41,6 +41,8 @@ def init_argparse() -> argparse.ArgumentParser:
                     help='Write "dhav.csv" with header information for all frames')
     parser.add_argument('--dryrun', action="store_true",
                     help='Only search, do not extract any frames')
+    parser.add_argument('--h264', action="store_true",
+                    help='Only write h264 streams, without DHAV-container')
     parser.add_argument('-v', '--verbosity', help='Level of logging, -vv enables debug', action='count', default=0)
     return parser
 
