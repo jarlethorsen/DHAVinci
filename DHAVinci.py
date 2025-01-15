@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-VERSION = 'v0.1'
+VERSION = 'v0.2'
 frametypes = set()
 
 logger = logging.getLogger(__file__)
