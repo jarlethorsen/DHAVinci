@@ -100,7 +100,7 @@ class DHAVContext:
         0xFB	Metadata Frame	Additional metadata (e.g., motion detection).
         0x00	Padding/Error Frame	Filler or error indicator.
         """
-        if self.type in [b'\xfc', b'\xfd', b'\xfe', b'\xfa', b'\xfb', b'\xf0', b'\xf1']:
+        if self.type in [b'\xfc', b'\xfd', b'\xf0', b'\xf1']:
             return True
         else:
             logger.debug(f'Found unknown DHAV-type: {self.type}')
