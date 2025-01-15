@@ -193,11 +193,6 @@ def get_cont_frames(data, offset, starttime, stoptime):
                     # Skip frame
                     offset += 4
                     continue
-            if frame.data[4:].find(b'DHAV') > -1:
-                # Skip frames that have other DHAV frames within
-                logger.debug(f'Frame at offset {offset} contains more than one DHAV header, skipping this header and will examine headers inside instead')
-                offset += 4
-                continue
             if frames:
                 # This is not the first frame, we make sure it is contiguous
                 if frames[-1][0] + frames[-1][1].frame_length == offset:
