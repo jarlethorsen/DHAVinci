@@ -181,6 +181,11 @@ def get_cont_frames(data, offset, starttime, stoptime):
     while True:
         offset, frame = get_frame(data, offset) or (None, None)
         if frame:
+            if not frame.type_ok():
+                # We do not want these frametypes
+                # Skip frame
+                offset += 4
+                continue
             if starttime or stoptime:
                 # Check if timestamp is within requested timeframe
                 timestamp = date_to_timestamp(frame.date)
