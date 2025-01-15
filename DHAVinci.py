@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 VERSION = 'v0.1'
+frametypes = set()
 
 logger = logging.getLogger(__file__)
 
@@ -163,6 +164,7 @@ def get_frame(data, offset):
         dhav = DHAVContext()
         data.seek(header_offset, 0)
         dhav.read_data(data)
+        frametypes.add(dhav.type.hex())
         try:
             timestamp = date_to_timestamp(dhav.date)
             return (header_offset, dhav)
@@ -279,6 +281,7 @@ def main():
     if args.get('csv'):
         if dhav_csv:
             dhav_csv.close()
+    print(f'Found the following frametypes: {frametypes}')
 
 
 if __name__ == '__main__':
