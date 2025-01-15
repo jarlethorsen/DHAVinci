@@ -49,7 +49,7 @@ def init_argparse() -> argparse.ArgumentParser:
 
 @dataclass
 class DHAVContext:
-    MAX_FRAME_LENGTH: int = 209_715_200
+    MAX_FRAME_LENGTH: int = 4_227_858_432
     type: int = 0
     subtype: int = 0
     channel: int = 0
